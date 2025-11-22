@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "Distraction Blocker",
+  "name": "ReFocus",
   "version": "1.0",
-  "description": "Block distracting sites and redirect to productive ones.",
+  "description": "Redirect from distracting sites to productive ones.",
   "permissions": [
     "storage",
     "tabs",

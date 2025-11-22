@@ -1,13 +1,13 @@
-# Distraction Blocker Chrome Extension
+# ReFocus Chrome Extension
 
-This extension helps you stay focused by blocking distracting websites and redirecting you to a list of productive sites that you curate.
+This extension helps you stay focused by redirecting you from distracting websites to a list of productive sites that you curate.
 
 ## How to Install
 
 1.  Open Chrome and navigate to `chrome://extensions`.
 2.  Enable **"Developer mode"** using the toggle switch in the top-right corner.
 3.  Click the **"Load unpacked"** button that appears.
-4.  In the file selection dialog, choose the `distraction-blocker` directory that contains this `README.md` file.
+4.  In the file selection dialog, choose the `refocus` directory that contains this `README.md` file.
 5.  The extension should now be loaded and active! You will see its icon in the Chrome toolbar.
 
 ## How to Use
