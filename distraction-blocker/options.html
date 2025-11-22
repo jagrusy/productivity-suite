@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Distraction Blocker Settings</title>
+  <link rel="stylesheet" type="text/css" href="options.css">
+</head>
+<body>
+  <div class="container">
+    <h1>Settings</h1>
+
+    <div class="list-container">
+      <h2>Blocked Sites</h2>
+      <div class="input-group">
+        <input type="text" id="new-blocked-site" placeholder="e.g., twitter.com">
+        <button id="add-blocked-btn">Add</button>
+      </div>
+      <ul id="blocked-sites-list"></ul>
+    </div>
+
+    <div class="list-container">
+      <h2>Productive Sites (Redirect To)</h2>
+      <div id="suggestion-message"></div>
+      <div class="input-group">
+        <input type="text" id="new-redirect-site" placeholder="e.g., https://dev.to">
+        <button id="add-redirect-btn">Add</button>
+      </div>
+      <ul id="redirect-sites-list"></ul>
+    </div>
+  </div>
+  <script src="options.js"></script>
+</body>
+</html>
