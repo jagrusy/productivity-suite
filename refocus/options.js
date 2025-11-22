@@ -10,6 +10,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const redirectSitesList = document.getElementById('redirect-sites-list');
   const suggestionMessage = document.getElementById('suggestion-message');
 
+  const popFromListCheckbox = document.getElementById('pop-from-list');
+
   // --- Functions to Render Lists ---
 
   function renderList(list, container, storageKey) {
@@ -33,11 +35,15 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // --- Load and Display Lists ---
+  // --- Load and Display Lists & Settings ---
 
-  chrome.storage.local.get(['blockedSites', 'redirectSites'], (result) => {
+  chrome.storage.local.get(['blockedSites', 'redirectSites', 'popFromList'], (result) => {
     const blockedSites = result.blockedSites || [];
     const redirectSites = result.redirectSites || [];
+    const popFromList = typeof result.popFromList === 'undefined' ? true : result.popFromList;
+
+    popFromListCheckbox.checked = popFromList;
+
     renderList(blockedSites, blockedSitesList, 'blockedSites');
     renderList(redirectSites, redirectSitesList, 'redirectSites');
 
@@ -90,5 +96,11 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       });
     }
+  });
+
+  // --- Event Listener for Settings ---
+
+  popFromListCheckbox.addEventListener('change', () => {
+    chrome.storage.local.set({ popFromList: popFromListCheckbox.checked });
   });
 });
