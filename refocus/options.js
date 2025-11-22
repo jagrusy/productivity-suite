@@ -14,25 +14,75 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // --- Functions to Render Lists ---
 
-  function renderList(list, container, storageKey) {
+  function renderList(list, container, storageKey, isBlockList = false) {
     container.innerHTML = '';
     list.forEach((site, index) => {
       const li = document.createElement('li');
-      li.textContent = site;
       
+      const siteText = document.createElement('span');
+      siteText.textContent = site;
+      li.appendChild(siteText);
+
+      const buttonsContainer = document.createElement('div');
+      buttonsContainer.classList.add('buttons-container');
+
+      if (isBlockList) {
+        const editBtn = document.createElement('button');
+        editBtn.textContent = 'Edit';
+        editBtn.classList.add('edit-btn');
+        editBtn.addEventListener('click', () => {
+          enterEditMode(li, list, index, container, storageKey, isBlockList);
+        });
+        buttonsContainer.appendChild(editBtn);
+      }
+
       const removeBtn = document.createElement('button');
       removeBtn.textContent = 'Remove';
       removeBtn.classList.add('remove-btn');
       removeBtn.addEventListener('click', () => {
         list.splice(index, 1);
         chrome.storage.local.set({ [storageKey]: list }, () => {
-          renderList(list, container, storageKey);
+          renderList(list, container, storageKey, isBlockList);
         });
       });
+      buttonsContainer.appendChild(removeBtn);
 
-      li.appendChild(removeBtn);
+      li.appendChild(buttonsContainer);
       container.appendChild(li);
     });
+  }
+
+  function enterEditMode(li, list, index, container, storageKey, isBlockList) {
+    const originalText = list[index];
+    li.innerHTML = ''; // Clear the list item
+
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.value = originalText;
+    
+    const saveBtn = document.createElement('button');
+    saveBtn.textContent = 'Save';
+    saveBtn.classList.add('save-btn');
+    saveBtn.addEventListener('click', () => {
+      const newValue = input.value.trim();
+      if (newValue) {
+        list[index] = newValue;
+        chrome.storage.local.set({ [storageKey]: list }, () => {
+          renderList(list, container, storageKey, isBlockList);
+        });
+      }
+    });
+
+    const cancelBtn = document.createElement('button');
+    cancelBtn.textContent = 'Cancel';
+    cancelBtn.classList.add('cancel-btn');
+    cancelBtn.addEventListener('click', () => {
+      renderList(list, container, storageKey, isBlockList);
+    });
+    
+    li.appendChild(input);
+    li.appendChild(saveBtn);
+    li.appendChild(cancelBtn);
   }
 
   // --- Load and Display Lists & Settings ---
@@ -44,8 +94,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     popFromListCheckbox.checked = popFromList;
 
-    renderList(blockedSites, blockedSitesList, 'blockedSites');
-    renderList(redirectSites, redirectSitesList, 'redirectSites');
+    renderList(blockedSites, blockedSitesList, 'blockedSites', true);
+    renderList(redirectSites, redirectSitesList, 'redirectSites', false);
 
     // Check for query param and show message
     const urlParams = new URLSearchParams(window.location.search);
@@ -74,7 +124,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!blockedSites.includes(newSite)) {
           blockedSites.push(newSite);
           chrome.storage.local.set({ blockedSites }, () => {
-            renderList(blockedSites, blockedSitesList, 'blockedSites');
+            renderList(blockedSites, blockedSitesList, 'blockedSites', true);
             newBlockedSiteInput.value = '';
           });
         }
@@ -90,7 +140,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!redirectSites.includes(newSite)) {
           redirectSites.push(newSite);
           chrome.storage.local.set({ redirectSites }, () => {
-            renderList(redirectSites, redirectSitesList, 'redirectSites');
+            renderList(redirectSites, redirectSitesList, 'redirectSites', false);
             newRedirectSiteInput.value = '';
           });
         }

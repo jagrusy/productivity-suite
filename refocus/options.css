@@ -141,3 +141,52 @@ li:last-child {
 .setting input[type="checkbox"] {
   margin-right: 10px;
 }
+
+.buttons-container {
+  display: flex;
+  gap: 5px;
+}
+
+.edit-btn, .save-btn, .cancel-btn {
+  padding: 5px 10px;
+  border: none;
+  color: white;
+  font-size: 12px;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+}
+
+.edit-btn {
+  background-color: #ffc107;
+  color: #212529;
+}
+
+.edit-btn:hover {
+  background-color: #e0a800;
+}
+
+.save-btn {
+  background-color: #28a745;
+}
+
+.save-btn:hover {
+  background-color: #218838;
+}
+
+.cancel-btn {
+  background-color: #6c757d;
+}
+
+.cancel-btn:hover {
+  background-color: #5a6268;
+}
+
+li input[type="text"] {
+  flex-grow: 1;
+  margin-right: 10px;
+  padding: 5px;
+  font-size: 14px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
