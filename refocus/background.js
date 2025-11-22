@@ -26,7 +26,7 @@ chrome.webNavigation.onBeforeNavigate.addListener(
       if (!blockedSites) return;
 
       for (const site of blockedSites) {
-        if (details.url.includes(site)) {
+        if (new URL(details.url).hostname.includes(site)) {
           if (redirectSites && redirectSites.length > 0) {
             const randomIndex = Math.floor(Math.random() * redirectSites.length);
             const randomRedirect = redirectSites[randomIndex];
