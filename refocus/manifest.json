@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "ReFocus",
-  "version": "1.0",
+  "version": "1.1.0",
   "description": "Redirect from distracting sites to productive ones.",
   "permissions": [
     "storage",

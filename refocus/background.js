@@ -25,8 +25,8 @@ chrome.webNavigation.onBeforeNavigate.addListener(
             const randomRedirect = redirectSites[Math.floor(Math.random() * redirectSites.length)];
             chrome.tabs.update(details.tabId, { url: randomRedirect });
           } else {
-            // If the redirect list is empty, open the options page
-            chrome.tabs.update(details.tabId, { url: 'options.html?reason=empty_list' });
+            // If the redirect list is empty, redirect to the default site
+            chrome.tabs.update(details.tabId, { url: 'https://tasks.google.com' });
           }
           break; // Stop checking once a match is found
         }
