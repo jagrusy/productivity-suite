@@ -5,11 +5,13 @@ document.addEventListener('DOMContentLoaded', () => {
   const redirectBtn = document.getElementById('add-to-redirect');
   const currentSiteP = document.getElementById('current-site');
   let currentHost = '';
+  let currentUrl = '';
 
   chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
     if (tabs[0] && tabs[0].url) {
       const url = new URL(tabs[0].url);
       currentHost = url.hostname;
+      currentUrl = tabs[0].url;
       currentSiteP.textContent = `Current site: ${currentHost}`;
     } else {
         blockedBtn.disabled = true;
@@ -36,11 +38,11 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   redirectBtn.addEventListener('click', () => {
-    if (currentHost) {
+    if (currentUrl) {
         chrome.storage.local.get({ redirectSites: [] }, (result) => {
             const redirectSites = result.redirectSites;
-            if (!redirectSites.includes(currentHost)) {
-                redirectSites.push(currentHost);
+            if (!redirectSites.includes(currentUrl)) {
+                redirectSites.push(currentUrl);
                 chrome.storage.local.set({ redirectSites }, () => {
                     redirectBtn.textContent = 'Site Added!';
                     redirectBtn.disabled = true;
