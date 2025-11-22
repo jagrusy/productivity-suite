@@ -1,9 +1,11 @@
 <!DOCTYPE html>
 <html>
+
 <head>
   <title>ReFocus Settings</title>
   <link rel="stylesheet" type="text/css" href="options.css">
 </head>
+
 <body>
   <div class="container">
     <h1>Settings</h1>
@@ -15,6 +17,10 @@
           <input type="checkbox" id="pop-from-list">
           Pop from focus list on redirect (removes the site from the list after you're redirected to it)
         </label>
+      </div>
+      <div class="setting">
+        <label for="default-redirect-site">Default Redirect Site:</label>
+        <input type="url" id="default-redirect-site" placeholder="e.g., https://tasks.google.com">
       </div>
     </div>
 
@@ -37,6 +43,7 @@
       <ul id="redirect-sites-list"></ul>
     </div>
   </div>
-  <script src="options.js"></script>
+  <script type="module" src="options.js"></script>
 </body>
+
 </html>

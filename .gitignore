@@ -1,1 +1,4 @@
 *.zip
+refocus/node_modules/
+refocus/package-lock.json
+refocus/package.json

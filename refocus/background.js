@@ -1,7 +1,7 @@
 // background.js
 
 chrome.runtime.onInstalled.addListener(() => {
-  chrome.storage.local.get(['blockedSites', 'redirectSites', 'popFromList'], (result) => {
+  chrome.storage.local.get(['blockedSites', 'redirectSites', 'popFromList', 'defaultRedirectSite'], (result) => {
     const newStorage = {};
     if (!result.blockedSites) {
       newStorage.blockedSites = ['example.com'];
@@ -12,6 +12,9 @@ chrome.runtime.onInstalled.addListener(() => {
     if (typeof result.popFromList === 'undefined') {
       newStorage.popFromList = true;
     }
+    if (typeof result.defaultRedirectSite === 'undefined') {
+      newStorage.defaultRedirectSite = 'https://tasks.google.com';
+    }
     if (Object.keys(newStorage).length > 0) {
       chrome.storage.local.set(newStorage);
     }
@@ -20,8 +23,8 @@ chrome.runtime.onInstalled.addListener(() => {
 
 chrome.webNavigation.onBeforeNavigate.addListener(
   (details) => {
-    chrome.storage.local.get(['blockedSites', 'redirectSites', 'popFromList'], (result) => {
-      const { blockedSites, redirectSites, popFromList } = result;
+    chrome.storage.local.get(['blockedSites', 'redirectSites', 'popFromList', 'defaultRedirectSite'], (result) => {
+      const { blockedSites, redirectSites, popFromList, defaultRedirectSite } = result;
 
       if (!blockedSites) return;
 
@@ -39,7 +42,7 @@ chrome.webNavigation.onBeforeNavigate.addListener(
             chrome.tabs.update(details.tabId, { url: randomRedirect });
           } else {
             // If the redirect list is empty, redirect to the default site
-            chrome.tabs.update(details.tabId, { url: 'https://tasks.google.com' });
+            chrome.tabs.update(details.tabId, { url: defaultRedirectSite });
           }
           break; // Stop checking once a match is found
         }

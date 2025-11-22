@@ -11,6 +11,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const suggestionMessage = document.getElementById('suggestion-message');
 
   const popFromListCheckbox = document.getElementById('pop-from-list');
+  const defaultRedirectSiteInput = document.getElementById('default-redirect-site');
 
   // --- Functions to Render Lists ---
 
@@ -87,12 +88,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // --- Load and Display Lists & Settings ---
 
-  chrome.storage.local.get(['blockedSites', 'redirectSites', 'popFromList'], (result) => {
+  chrome.storage.local.get(['blockedSites', 'redirectSites', 'popFromList', 'defaultRedirectSite'], (result) => {
     const blockedSites = result.blockedSites || [];
     const redirectSites = result.redirectSites || [];
     const popFromList = typeof result.popFromList === 'undefined' ? true : result.popFromList;
+    const defaultRedirectSite = result.defaultRedirectSite || 'https://tasks.google.com';
 
     popFromListCheckbox.checked = popFromList;
+    defaultRedirectSiteInput.value = defaultRedirectSite;
 
     renderList(blockedSites, blockedSitesList, 'blockedSites', true);
     renderList(redirectSites, redirectSitesList, 'redirectSites', false);
@@ -152,5 +155,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
   popFromListCheckbox.addEventListener('change', () => {
     chrome.storage.local.set({ popFromList: popFromListCheckbox.checked });
+  });
+
+  defaultRedirectSiteInput.addEventListener('change', () => {
+    chrome.storage.local.set({ defaultRedirectSite: defaultRedirectSiteInput.value.trim() });
   });
 });
