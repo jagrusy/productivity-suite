@@ -11,7 +11,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
   const popFromListCheckbox = document.getElementById('pop-from-list');
-  const defaultRedirectSiteInput = document.getElementById('default-redirect-site');
+  // Removed defaultRedirectSiteInput as it will be dynamically rendered
 
   // New scheduling elements
   const enableSchedulingCheckbox = document.getElementById('enable-scheduling');
@@ -28,8 +28,25 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // --- Functions to Render Lists ---
 
+  // Refactored renderList to be more generic and handle defaultRedirectSite
   function renderList(list, container, storageKey, isBlockList = false) {
-    container.innerHTML = '';
+    // Clear existing list items, but do not touch the default redirect site if it's there
+    if (storageKey === 'redirectSites') {
+        // Remove all except the default redirect li if it exists
+        Array.from(container.children).forEach(child => {
+            if (child.id !== 'default-redirect-li') {
+                child.remove();
+            }
+        });
+    } else {
+        container.innerHTML = '';
+    }
+
+    // Render default redirect site first if this is the redirectSitesList
+    if (storageKey === 'redirectSites') {
+      renderDefaultRedirectSite();
+    }
+
     list.forEach((item, index) => { // 'item' can be a string (redirectSite) or object (blockedSite)
       const li = document.createElement('li');
       
@@ -54,7 +71,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const buttonsContainer = document.createElement('div');
       buttonsContainer.classList.add('buttons-container');
 
-      if (isBlockList) {
+      if (isBlockList || storageKey === 'redirectSites') { // Allow editing for both blocked and redirect sites
         const editBtn = document.createElement('button');
         editBtn.textContent = 'Edit';
         editBtn.classList.add('edit-btn');
@@ -80,8 +97,16 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  // Handles editing for both regular list items and the default redirect site
   function enterEditMode(li, list, index, container, storageKey, isBlockList) {
-    const originalItem = { ...list[index] }; // Copy to avoid direct modification
+    let originalItem;
+    // Determine the original item based on storageKey
+    if (storageKey === 'defaultRedirectSite') {
+        originalItem = list; // 'list' is actually the default site string in this context
+    } else {
+        originalItem = { ...list[index] };
+    }
+
     li.innerHTML = ''; // Clear the list item
 
     const domainInput = document.createElement('input');
@@ -105,12 +130,20 @@ document.addEventListener('DOMContentLoaded', () => {
       const newWhitelistValue = whitelistInput.value.trim();
 
       if (newDomainValue) {
-        if (isBlockList) {
+        if (storageKey === 'defaultRedirectSite') {
+            chrome.storage.local.set({ [storageKey]: newDomainValue }, () => {
+                renderDefaultRedirectSite(); // Re-render only the default site
+                // We might need to re-render the whole redirectSitesList to ensure correct order
+                chrome.storage.local.get('redirectSites', (res) => {
+                    renderList(res.redirectSites || [], redirectSitesList, 'redirectSites', false);
+                });
+            });
+        } else if (isBlockList) {
           list[index] = {
             domain: newDomainValue,
             whitelistedPaths: newWhitelistValue.split(',').map(p => p.trim()).filter(p => p !== '')
           };
-        } else {
+        } else { // Regular redirect site
           list[index] = newDomainValue;
         }
         chrome.storage.local.set({ [storageKey]: list }, () => {
@@ -123,7 +156,14 @@ document.addEventListener('DOMContentLoaded', () => {
     cancelBtn.textContent = 'Cancel';
     cancelBtn.classList.add('cancel-btn');
     cancelBtn.addEventListener('click', () => {
-      renderList(list, container, storageKey, isBlockList);
+        if (storageKey === 'defaultRedirectSite') {
+            renderDefaultRedirectSite();
+            chrome.storage.local.get('redirectSites', (res) => {
+                renderList(res.redirectSites || [], redirectSitesList, 'redirectSites', false);
+            });
+        } else {
+            renderList(list, container, storageKey, isBlockList);
+        }
     });
     
     li.appendChild(domainInput);
@@ -133,6 +173,42 @@ document.addEventListener('DOMContentLoaded', () => {
     li.appendChild(saveBtn);
     li.appendChild(cancelBtn);
   }
+
+  // --- Render the Default Redirect Site LI ---
+  function renderDefaultRedirectSite() {
+    chrome.storage.local.get('defaultRedirectSite', (result) => {
+      const defaultSite = result.defaultRedirectSite || 'https://tasks.google.com';
+      let defaultLi = document.getElementById('default-redirect-li');
+      
+      if (!defaultLi) {
+          defaultLi = document.createElement('li');
+          defaultLi.id = 'default-redirect-li';
+          redirectSitesList.prepend(defaultLi); // Always on top
+      } else {
+          defaultLi.innerHTML = ''; // Clear if re-rendering
+      }
+
+      const mainText = document.createElement('span');
+      mainText.classList.add('list-item-main-text');
+      mainText.textContent = `Default: ${defaultSite}`;
+      defaultLi.appendChild(mainText);
+
+      const buttonsContainer = document.createElement('div');
+      buttonsContainer.classList.add('buttons-container');
+
+      const editBtn = document.createElement('button');
+      editBtn.textContent = 'Edit';
+      editBtn.classList.add('edit-btn');
+      editBtn.addEventListener('click', () => {
+        // Pass the default site directly as 'list' and a special key 'defaultRedirectSite'
+        enterEditMode(defaultLi, defaultSite, -1, redirectSitesList, 'defaultRedirectSite', false);
+      });
+      buttonsContainer.appendChild(editBtn);
+
+      defaultLi.appendChild(buttonsContainer);
+    });
+  }
+
 
   // --- Load and Display Lists & Settings ---
 
@@ -147,7 +223,6 @@ document.addEventListener('DOMContentLoaded', () => {
     
     const redirectSites = result.redirectSites || [];
     const popFromList = typeof result.popFromList === 'undefined' ? true : result.popFromList;
-    const defaultRedirectSite = result.defaultRedirectSite || 'https://tasks.google.com';
 
     // Scheduling defaults
     const enableScheduling = typeof result.enableScheduling === 'undefined' ? false : result.enableScheduling;
@@ -160,7 +235,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const successfulRedirects = result.successfulRedirects || 0;
 
     popFromListCheckbox.checked = popFromList;
-    defaultRedirectSiteInput.value = defaultRedirectSite;
 
     // Set scheduling UI state
     enableSchedulingCheckbox.checked = enableScheduling;
@@ -177,8 +251,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
     renderList(blockedSites, blockedSitesList, 'blockedSites', true);
+    // renderDefaultRedirectSite is now called inside renderList for redirectSites
     renderList(redirectSites, redirectSitesList, 'redirectSites', false);
-
 
   });
 
@@ -228,9 +302,7 @@ document.addEventListener('DOMContentLoaded', () => {
     chrome.storage.local.set({ popFromList: popFromListCheckbox.checked });
   });
 
-  defaultRedirectSiteInput.addEventListener('change', () => {
-    chrome.storage.local.set({ defaultRedirectSite: defaultRedirectSiteInput.value.trim() });
-  });
+  // Removed defaultRedirectSiteInput event listener
 
   // --- Event Listeners for Scheduling Settings ---
 
@@ -256,7 +328,8 @@ document.addEventListener('DOMContentLoaded', () => {
           if (!scheduledDays.includes(checkbox.value)) {
             scheduledDays.push(checkbox.value);
           }
-        } else {
+        }
+        else {
           scheduledDays = scheduledDays.filter(day => day !== checkbox.value);
         }
         chrome.storage.local.set({ scheduledDays: scheduledDays });

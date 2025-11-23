@@ -4,7 +4,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-ReFocus is a Chrome Extension (Manifest V3) that helps users stay focused by redirecting from distracting websites to a curated list of productive sites.
+This repository contains a productivity suite with two main applications:
+
+1. **ReFocus** - Chrome Extension (Manifest V3) that redirects from distracting websites to productive ones
+2. **Google Tasks Pomodoro** - macOS menu bar app integrating Google Tasks with Pomodoro timer and statistics tracking
 
 ## Development Commands
 
@@ -64,3 +67,64 @@ Jest is configured with:
 - Babel transform for ES6+ syntax
 - Test files expected in `tests/**/*.test.js` (note: no test files currently exist)
 - Chrome API mocking via jest-chrome (configured in jest.setup.js)
+
+---
+
+# Google Tasks Pomodoro (macOS App)
+
+## Development Commands
+
+### Building and Running
+Open in Xcode and build/run (⌘R):
+```bash
+cd google-tasks-pomodoro
+open GoogleTasksPomodoro.xcodeproj  # If project exists
+```
+
+**Note**: Project requires manual Xcode setup on first run - see google-tasks-pomodoro/README.md for full setup instructions.
+
+## Architecture
+
+### Core Components
+
+**GoogleTasksPomodoroApp.swift** - Main app entry point using SwiftUI App lifecycle with NSApplicationDelegate for menu bar integration.
+
+**AppDelegate** (Views/AppDelegate.swift)
+- Creates and manages NSStatusItem in menu bar
+- Updates menu bar icon/text based on timer state (shows countdown when running, 🍅 when idle)
+- Manages popover presentation for main UI
+- Observes `PomodoroStateChanged` notifications to update display
+
+**Data Models**
+- `GoogleTask`: Represents tasks from Google Tasks API (status: needsAction/completed)
+- `PomodoroSession`: Core Data entity tracking work sessions, breaks, duration, completion status
+- `AppSettings`: UserDefaults-backed settings (work/break durations, auto-start options)
+
+**Services Layer**
+- `GoogleTasksService`: OAuth 2.0 authentication with Google, fetches/updates tasks via REST API
+- `PomodoroTimer`: Timer engine managing work/break sessions, publishes state changes via Combine
+- `NotificationManager`: macOS UserNotifications for timer completion alerts
+
+**StatisticsManager** (Managers/)
+- Core Data persistence for PomodoroSession entities
+- Programmatic Core Data model creation (no .xcdatamodeld file)
+- Provides aggregated statistics: total time per task, pomodoros completed, daily/weekly counts
+
+**UI Views (SwiftUI)**
+- `MenuBarView`: Tab-based main interface (Tasks, Timer, Stats, Settings)
+- `TaskListView`: Displays Google Tasks with "Start" buttons, handles OAuth flow
+- `TimerView`: Shows active timer with progress ring, controls (pause/resume/stop/skip)
+- `SettingsView`: Customizable durations and auto-start preferences
+- `StatisticsView`: Summary cards and per-task breakdowns
+
+### Key Technical Details
+
+**Menu Bar Integration**: Uses NSStatusItem with NSPopover for dropdown UI. The app is "LSUIElement" (agent app) so it doesn't show in Dock.
+
+**OAuth Flow**: Uses ASWebAuthenticationSession for Google OAuth. Requires client ID configuration in GoogleTasksService.swift and URL scheme registration in Xcode.
+
+**Timer State Management**: PomodoroTimer is a singleton (@ObservedObject) shared across views. Publishes updates via Combine and NotificationCenter.
+
+**Session Tracking**: Work sessions are saved to Core Data when completed or stopped. Breaks are tracked but primarily for statistics, not linked to specific tasks.
+
+**Statistics Calculation**: Filters sessions by `sessionType == "work"` for task-specific stats. Supports grouping by day for trend analysis.
