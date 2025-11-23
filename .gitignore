@@ -3,3 +3,6 @@ refocus/node_modules/
 refocus/package-lock.json
 refocus/package.json
 package.sh
+CLAUDE.md
+refocus/tests/
+refocus/*.test.js
