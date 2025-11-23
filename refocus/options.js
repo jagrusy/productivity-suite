@@ -8,7 +8,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const newRedirectSiteInput = document.getElementById('new-redirect-site');
   const addRedirectBtn = document.getElementById('add-redirect-btn');
   const redirectSitesList = document.getElementById('redirect-sites-list');
-  const suggestionMessage = document.getElementById('suggestion-message');
+
 
   const popFromListCheckbox = document.getElementById('pop-from-list');
   const defaultRedirectSiteInput = document.getElementById('default-redirect-site');
@@ -179,22 +179,7 @@ document.addEventListener('DOMContentLoaded', () => {
     renderList(blockedSites, blockedSitesList, 'blockedSites', true);
     renderList(redirectSites, redirectSitesList, 'redirectSites', false);
 
-    // Check for query param and show message
-    const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.get('reason') === 'empty_list') {
-      suggestionMessage.innerHTML = `
-        <p class="suggestion-text">
-          Your productive sites list is empty! Add some sites you'd like to be redirected to. 
-          You can also set or change the default redirect site using the input field above.
-          Here are some ideas to get you started:
-        </p>
-        <ul>
-          <li><a href="https://dev.to" target="_blank">dev.to</a></li>
-          <li><a href="https://news.ycombinator.com" target="_blank">Hacker News</a></li>
-          <li><a href="https://stackoverflow.com" target="_blank">Stack Overflow</a></li>
-        </ul>
-      `;
-    }
+
   });
 
   // --- Event Listeners for Adding Sites ---
