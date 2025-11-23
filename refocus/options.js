@@ -20,6 +20,11 @@ document.addEventListener('DOMContentLoaded', () => {
   const endTimeInput = document.getElementById('end-time');
   const dayCheckboxes = document.querySelectorAll('.day-checkbox');
 
+  // New statistics elements
+  const blockedAttemptsCountSpan = document.getElementById('blocked-attempts-count');
+  const successfulRedirectsCountSpan = document.getElementById('successful-redirects-count');
+  const resetStatsButton = document.getElementById('reset-stats-button');
+
 
   // --- Functions to Render Lists ---
 
@@ -131,7 +136,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // --- Load and Display Lists & Settings ---
 
-  chrome.storage.local.get(['blockedSites', 'redirectSites', 'popFromList', 'defaultRedirectSite', 'enableScheduling', 'startTime', 'endTime', 'scheduledDays'], (result) => {
+  chrome.storage.local.get(['blockedSites', 'redirectSites', 'popFromList', 'defaultRedirectSite', 'enableScheduling', 'startTime', 'endTime', 'scheduledDays', 'blockedAttempts', 'successfulRedirects'], (result) => {
     // Ensure blockedSites is in the new format for options page rendering
     let blockedSites = result.blockedSites || [];
     if (Array.isArray(blockedSites) && blockedSites.every(item => typeof item === 'string')) {
@@ -150,6 +155,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const endTime = result.endTime || '17:00';
     const scheduledDays = result.scheduledDays || ["mon", "tue", "wed", "thu", "fri"];
 
+    // Statistics defaults
+    const blockedAttempts = result.blockedAttempts || 0;
+    const successfulRedirects = result.successfulRedirects || 0;
 
     popFromListCheckbox.checked = popFromList;
     defaultRedirectSiteInput.value = defaultRedirectSite;
@@ -162,6 +170,10 @@ document.addEventListener('DOMContentLoaded', () => {
     dayCheckboxes.forEach(checkbox => {
       checkbox.checked = scheduledDays.includes(checkbox.value);
     });
+
+    // Set statistics UI state
+    blockedAttemptsCountSpan.textContent = blockedAttempts;
+    successfulRedirectsCountSpan.textContent = successfulRedirects;
 
 
     renderList(blockedSites, blockedSitesList, 'blockedSites', true);
@@ -264,6 +276,15 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         chrome.storage.local.set({ scheduledDays: scheduledDays });
       });
+    });
+  });
+
+  // --- Event Listener for Statistics ---
+
+  resetStatsButton.addEventListener('click', () => {
+    chrome.storage.local.set({ blockedAttempts: 0, successfulRedirects: 0 }, () => {
+      blockedAttemptsCountSpan.textContent = 0;
+      successfulRedirectsCountSpan.textContent = 0;
     });
   });
 });

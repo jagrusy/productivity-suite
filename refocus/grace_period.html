@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>ReFocus - Grace Period</title>
+  <link rel="stylesheet" type="text/css" href="options.css"> <!-- Reusing some styles -->
+  <style>
+    body {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+      background-color: #f0f2f5;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      color: #333;
+    }
+    .grace-container {
+      background-color: white;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+      text-align: center;
+      max-width: 500px;
+    }
+    h1 {
+      color: #dc3545; /* Red for warning */
+      margin-bottom: 20px;
+    }
+    p {
+      font-size: 1.1em;
+      margin-bottom: 15px;
+    }
+    .countdown {
+      font-size: 2.5em;
+      font-weight: bold;
+      color: #007bff;
+      margin-bottom: 20px;
+    }
+    .bypass-btn {
+      background-color: #28a745; /* Green for bypass */
+      color: white;
+      padding: 12px 25px;
+      border: none;
+      border-radius: 5px;
+      font-size: 1.1em;
+      cursor: pointer;
+      transition: background-color 0.2s ease-in-out;
+    }
+    .bypass-btn:hover {
+      background-color: #218838;
+    }
+    .redirect-info {
+      font-size: 0.9em;
+      color: #6c757d;
+      margin-top: 20px;
+    }
+    .redirect-info a {
+      color: #007bff;
+      text-decoration: none;
+    }
+    .redirect-info a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <div class="grace-container">
+    <h1>Blocked Site Detected!</h1>
+    <p>You are trying to access:</p>
+    <p><strong><span id="blocked-url"></span></strong></p>
+    <p>Redirecting in <span class="countdown" id="countdown"></span> seconds...</p>
+    <button class="bypass-btn" id="bypass-button">Bypass for this session</button>
+    <p class="redirect-info">You will be redirected to: <a id="redirect-url-link" href="#" target="_blank"></a></p>
+  </div>
+  <script src="grace_period.js"></script>
+</body>
+</html>

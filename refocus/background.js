@@ -42,6 +42,8 @@ function isSchedulingActive(enableScheduling, startTime, endTime, scheduledDays)
   return false; // Not a scheduled day
 }
 
+let bypassedTabs = new Map(); // Map<tabId, Set<url>> to store temporarily bypassed URLs
+
 // Only register Chrome event listeners in browser environment
 if (typeof chrome !== 'undefined' && chrome.runtime) {
   chrome.runtime.onInstalled.addListener(() => {
@@ -77,6 +79,20 @@ if (typeof chrome !== 'undefined' && chrome.runtime) {
       if (typeof result.scheduledDays === 'undefined') {
         newStorage.scheduledDays = ["mon", "tue", "wed", "thu", "fri"];
       }
+      // Grace period defaults
+      if (typeof result.enableGracePeriod === 'undefined') {
+        newStorage.enableGracePeriod = false;
+      }
+      if (typeof result.gracePeriodDuration === 'undefined') {
+        newStorage.gracePeriodDuration = 5;
+      }
+      // Statistics defaults
+      if (typeof result.blockedAttempts === 'undefined') {
+        newStorage.blockedAttempts = 0;
+      }
+      if (typeof result.successfulRedirects === 'undefined') {
+        newStorage.successfulRedirects = 0;
+      }
       if (Object.keys(newStorage).length > 0) {
         chrome.storage.local.set(newStorage);
       }
@@ -85,8 +101,14 @@ if (typeof chrome !== 'undefined' && chrome.runtime) {
 
   chrome.webNavigation.onBeforeNavigate.addListener(
     (details) => {
-      chrome.storage.local.get(['blockedSites', 'redirectSites', 'popFromList', 'defaultRedirectSite', 'enableScheduling', 'startTime', 'endTime', 'scheduledDays'], (result) => {
-        let { blockedSites, redirectSites, popFromList, defaultRedirectSite, enableScheduling, startTime, endTime, scheduledDays } = result;
+      // Check for bypass
+      if (bypassedTabs.has(details.tabId) && bypassedTabs.get(details.tabId).has(details.url)) {
+        bypassedTabs.get(details.tabId).delete(details.url); // Allow one bypass
+        return;
+      }
+
+      chrome.storage.local.get(['blockedSites', 'redirectSites', 'popFromList', 'defaultRedirectSite', 'enableScheduling', 'startTime', 'endTime', 'scheduledDays', 'enableGracePeriod', 'gracePeriodDuration'], (result) => {
+        let { blockedSites, redirectSites, popFromList, defaultRedirectSite, enableScheduling, startTime, endTime, scheduledDays, enableGracePeriod, gracePeriodDuration } = result;
 
         // Ensure blockedSites is in the new format
         if (!Array.isArray(blockedSites) || blockedSites.every(item => typeof item === 'string')) {
@@ -137,18 +159,22 @@ if (typeof chrome !== 'undefined' && chrome.runtime) {
 
             // If not whitelisted, proceed with blocking check
             if (matchesBlockedSite(currentHostname, blockedSite.domain)) {
+              let targetRedirectUrl = defaultRedirectSite;
               if (redirectSites && redirectSites.length > 0) {
                 const randomIndex = Math.floor(Math.random() * redirectSites.length);
-                const randomRedirect = redirectSites[randomIndex];
+                targetRedirectUrl = redirectSites[randomIndex];
 
                 if (popFromList) {
                   redirectSites.splice(randomIndex, 1);
                   chrome.storage.local.set({ redirectSites: redirectSites });
                 }
+              }
 
-                chrome.tabs.update(details.tabId, { url: randomRedirect });
+              if (enableGracePeriod) {
+                const gracePeriodPageUrl = chrome.runtime.getURL(`grace_period.html?blockedUrl=${encodeURIComponent(details.url)}&redirectUrl=${encodeURIComponent(targetRedirectUrl)}&duration=${gracePeriodDuration}&tabId=${details.tabId}`);
+                chrome.tabs.update(details.tabId, { url: gracePeriodPageUrl });
               } else {
-                chrome.tabs.update(details.tabId, { url: defaultRedirectSite });
+                chrome.tabs.update(details.tabId, { url: targetRedirectUrl });
               }
               break; // Stop checking once a match is found
             }
@@ -160,6 +186,16 @@ if (typeof chrome !== 'undefined' && chrome.runtime) {
     },
     { url: [{ urlMatches: 'https://*/*' }, { urlMatches: 'http://*/*' }] }
   );
+  chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+    if (request.action === 'bypassBlocking') {
+      const { tabId, originalBlockedUrl } = request;
+      if (!bypassedTabs.has(tabId)) {
+        bypassedTabs.set(tabId, new Set());
+      }
+      bypassedTabs.get(tabId).add(originalBlockedUrl);
+      console.log(`Bypass requested for tab ${tabId} and URL ${originalBlockedUrl}`);
+    }
+  });
 }
 
 // Export for testing (only in Node.js environment)
