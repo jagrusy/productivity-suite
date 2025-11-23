@@ -231,3 +231,15 @@ li input[type="text"] {
 .days-of-week input[type="checkbox"] {
   margin-right: 5px;
 }
+
+#grace-period-duration-setting label {
+  min-width: 180px; /* Align with other labels */
+}
+
+#grace-period-duration-setting input[type="number"] {
+  width: 60px; /* Adjust width for number input */
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 14px;
+}

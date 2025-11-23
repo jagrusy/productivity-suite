@@ -22,6 +22,16 @@
         <label for="default-redirect-site">Default Redirect Site:</label>
         <input type="url" id="default-redirect-site" placeholder="e.g., https://tasks.google.com">
       </div>
+      <div class="setting">
+        <label for="enable-grace-period">
+          <input type="checkbox" id="enable-grace-period">
+          Enable Grace Period (show a countdown before redirect)
+        </label>
+      </div>
+      <div class="setting" id="grace-period-duration-setting">
+        <label for="grace-period-duration">Grace Period Duration (seconds):</label>
+        <input type="number" id="grace-period-duration" value="5" min="1" max="60">
+      </div>
     </div>
 
     <div class="settings-container">
