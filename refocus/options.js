@@ -13,16 +13,38 @@ document.addEventListener('DOMContentLoaded', () => {
   const popFromListCheckbox = document.getElementById('pop-from-list');
   const defaultRedirectSiteInput = document.getElementById('default-redirect-site');
 
+  // New scheduling elements
+  const enableSchedulingCheckbox = document.getElementById('enable-scheduling');
+  const schedulingDetailsDiv = document.getElementById('scheduling-details');
+  const startTimeInput = document.getElementById('start-time');
+  const endTimeInput = document.getElementById('end-time');
+  const dayCheckboxes = document.querySelectorAll('.day-checkbox');
+
+
   // --- Functions to Render Lists ---
 
   function renderList(list, container, storageKey, isBlockList = false) {
     container.innerHTML = '';
-    list.forEach((site, index) => {
+    list.forEach((item, index) => { // 'item' can be a string (redirectSite) or object (blockedSite)
       const li = document.createElement('li');
       
-      const siteText = document.createElement('span');
-      siteText.textContent = site;
-      li.appendChild(siteText);
+      const mainText = document.createElement('span');
+      mainText.classList.add('list-item-main-text');
+
+      if (isBlockList) {
+        mainText.textContent = item.domain;
+        li.appendChild(mainText);
+
+        if (item.whitelistedPaths && item.whitelistedPaths.length > 0) {
+          const whitelistText = document.createElement('span');
+          whitelistText.classList.add('whitelisted-paths-text');
+          whitelistText.textContent = ` (Whitelist: ${item.whitelistedPaths.join(', ')})`;
+          li.appendChild(whitelistText);
+        }
+      } else {
+        mainText.textContent = item; // redirectSite is a string
+        li.appendChild(mainText);
+      }
 
       const buttonsContainer = document.createElement('div');
       buttonsContainer.classList.add('buttons-container');
@@ -54,20 +76,38 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function enterEditMode(li, list, index, container, storageKey, isBlockList) {
-    const originalText = list[index];
+    const originalItem = { ...list[index] }; // Copy to avoid direct modification
     li.innerHTML = ''; // Clear the list item
 
-    const input = document.createElement('input');
-    input.type = 'text';
-    input.value = originalText;
+    const domainInput = document.createElement('input');
+    domainInput.type = 'text';
+    domainInput.value = isBlockList ? originalItem.domain : originalItem;
+    domainInput.placeholder = isBlockList ? 'e.g., twitter.com' : 'e.g., https://dev.to';
+
+    const whitelistInput = document.createElement('input');
+    if (isBlockList) {
+      whitelistInput.type = 'text';
+      whitelistInput.value = originalItem.whitelistedPaths ? originalItem.whitelistedPaths.join(', ') : '';
+      whitelistInput.placeholder = 'Whitelist paths (comma-separated, e.g., /feed, /profile)';
+      whitelistInput.style.marginTop = '5px';
+    }
     
     const saveBtn = document.createElement('button');
     saveBtn.textContent = 'Save';
     saveBtn.classList.add('save-btn');
     saveBtn.addEventListener('click', () => {
-      const newValue = input.value.trim();
-      if (newValue) {
-        list[index] = newValue;
+      const newDomainValue = domainInput.value.trim();
+      const newWhitelistValue = whitelistInput.value.trim();
+
+      if (newDomainValue) {
+        if (isBlockList) {
+          list[index] = {
+            domain: newDomainValue,
+            whitelistedPaths: newWhitelistValue.split(',').map(p => p.trim()).filter(p => p !== '')
+          };
+        } else {
+          list[index] = newDomainValue;
+        }
         chrome.storage.local.set({ [storageKey]: list }, () => {
           renderList(list, container, storageKey, isBlockList);
         });
@@ -81,21 +121,48 @@ document.addEventListener('DOMContentLoaded', () => {
       renderList(list, container, storageKey, isBlockList);
     });
     
-    li.appendChild(input);
+    li.appendChild(domainInput);
+    if (isBlockList) {
+      li.appendChild(whitelistInput);
+    }
     li.appendChild(saveBtn);
     li.appendChild(cancelBtn);
   }
 
   // --- Load and Display Lists & Settings ---
 
-  chrome.storage.local.get(['blockedSites', 'redirectSites', 'popFromList', 'defaultRedirectSite'], (result) => {
-    const blockedSites = result.blockedSites || [];
+  chrome.storage.local.get(['blockedSites', 'redirectSites', 'popFromList', 'defaultRedirectSite', 'enableScheduling', 'startTime', 'endTime', 'scheduledDays'], (result) => {
+    // Ensure blockedSites is in the new format for options page rendering
+    let blockedSites = result.blockedSites || [];
+    if (Array.isArray(blockedSites) && blockedSites.every(item => typeof item === 'string')) {
+      blockedSites = blockedSites.map(domain => ({ domain: domain, whitelistedPaths: [] }));
+    } else if (!Array.isArray(blockedSites)) {
+        blockedSites = [];
+    }
+    
     const redirectSites = result.redirectSites || [];
     const popFromList = typeof result.popFromList === 'undefined' ? true : result.popFromList;
     const defaultRedirectSite = result.defaultRedirectSite || 'https://tasks.google.com';
 
+    // Scheduling defaults
+    const enableScheduling = typeof result.enableScheduling === 'undefined' ? false : result.enableScheduling;
+    const startTime = result.startTime || '09:00';
+    const endTime = result.endTime || '17:00';
+    const scheduledDays = result.scheduledDays || ["mon", "tue", "wed", "thu", "fri"];
+
+
     popFromListCheckbox.checked = popFromList;
     defaultRedirectSiteInput.value = defaultRedirectSite;
+
+    // Set scheduling UI state
+    enableSchedulingCheckbox.checked = enableScheduling;
+    schedulingDetailsDiv.style.display = enableScheduling ? 'block' : 'none';
+    startTimeInput.value = startTime;
+    endTimeInput.value = endTime;
+    dayCheckboxes.forEach(checkbox => {
+      checkbox.checked = scheduledDays.includes(checkbox.value);
+    });
+
 
     renderList(blockedSites, blockedSitesList, 'blockedSites', true);
     renderList(redirectSites, redirectSitesList, 'redirectSites', false);
@@ -124,9 +191,15 @@ document.addEventListener('DOMContentLoaded', () => {
     const newSite = newBlockedSiteInput.value.trim();
     if (newSite) {
       chrome.storage.local.get({ blockedSites: [] }, (result) => {
-        const blockedSites = result.blockedSites;
-        if (!blockedSites.includes(newSite)) {
-          blockedSites.push(newSite);
+        let blockedSites = result.blockedSites;
+        // Ensure new blocked site is added in the object format
+        if (!Array.isArray(blockedSites) || blockedSites.every(item => typeof item === 'string')) {
+            blockedSites = blockedSites.map(domain => ({ domain: domain, whitelistedPaths: [] }));
+        }
+
+        const domainExists = blockedSites.some(item => item.domain === newSite);
+        if (!domainExists) {
+          blockedSites.push({ domain: newSite, whitelistedPaths: [] });
           chrome.storage.local.set({ blockedSites }, () => {
             renderList(blockedSites, blockedSitesList, 'blockedSites', true);
             newBlockedSiteInput.value = '';
@@ -152,7 +225,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // --- Event Listener for Settings ---
+  // --- Event Listeners for General Settings ---
 
   popFromListCheckbox.addEventListener('change', () => {
     chrome.storage.local.set({ popFromList: popFromListCheckbox.checked });
@@ -160,5 +233,37 @@ document.addEventListener('DOMContentLoaded', () => {
 
   defaultRedirectSiteInput.addEventListener('change', () => {
     chrome.storage.local.set({ defaultRedirectSite: defaultRedirectSiteInput.value.trim() });
+  });
+
+  // --- Event Listeners for Scheduling Settings ---
+
+  enableSchedulingCheckbox.addEventListener('change', () => {
+    const isEnabled = enableSchedulingCheckbox.checked;
+    schedulingDetailsDiv.style.display = isEnabled ? 'block' : 'none';
+    chrome.storage.local.set({ enableScheduling: isEnabled });
+  });
+
+  startTimeInput.addEventListener('change', () => {
+    chrome.storage.local.set({ startTime: startTimeInput.value });
+  });
+
+  endTimeInput.addEventListener('change', () => {
+    chrome.storage.local.set({ endTime: endTimeInput.value });
+  });
+
+  dayCheckboxes.forEach(checkbox => {
+    checkbox.addEventListener('change', () => {
+      chrome.storage.local.get({ scheduledDays: ["mon", "tue", "wed", "thu", "fri"] }, (result) => {
+        let scheduledDays = result.scheduledDays;
+        if (checkbox.checked) {
+          if (!scheduledDays.includes(checkbox.value)) {
+            scheduledDays.push(checkbox.value);
+          }
+        } else {
+          scheduledDays = scheduledDays.filter(day => day !== checkbox.value);
+        }
+        chrome.storage.local.set({ scheduledDays: scheduledDays });
+      });
+    });
   });
 });

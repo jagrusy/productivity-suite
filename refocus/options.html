@@ -24,6 +24,36 @@
       </div>
     </div>
 
+    <div class="settings-container">
+      <h2>Scheduling Settings</h2>
+      <div class="setting">
+        <label for="enable-scheduling">
+          <input type="checkbox" id="enable-scheduling">
+          Enable Time-Based Blocking
+        </label>
+      </div>
+      <div class="setting" id="scheduling-details">
+        <div>
+          <label for="start-time">Start Time:</label>
+          <input type="time" id="start-time" value="09:00">
+        </div>
+        <div>
+          <label for="end-time">End Time:</label>
+          <input type="time" id="end-time" value="17:00">
+        </div>
+        <div class="days-of-week">
+          <label>Days:</label>
+          <label><input type="checkbox" class="day-checkbox" value="mon">Mon</label>
+          <label><input type="checkbox" class="day-checkbox" value="tue">Tue</label>
+          <label><input type="checkbox" class="day-checkbox" value="wed">Wed</label>
+          <label><input type="checkbox" class="day-checkbox" value="thu">Thu</label>
+          <label><input type="checkbox" class="day-checkbox" value="fri">Fri</label>
+          <label><input type="checkbox" class="day-checkbox" value="sat">Sat</label>
+          <label><input type="checkbox" class="day-checkbox" value="sun">Sun</label>
+        </div>
+      </div>
+    </div>
+
     <div class="list-container">
       <h2>Blocked Sites</h2>
       <div class="input-group">

@@ -190,3 +190,44 @@ li input[type="text"] {
   border: 1px solid #ccc;
   border-radius: 4px;
 }
+
+#scheduling-details {
+  border: 1px solid #eee;
+  padding: 15px;
+  border-radius: 5px;
+  background-color: #fcfcfc;
+  margin-top: 10px;
+}
+
+#scheduling-details > div {
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+}
+
+#scheduling-details label {
+  margin-right: 10px;
+  min-width: 80px; /* Align labels */
+}
+
+#scheduling-details input[type="time"] {
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.days-of-week {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.days-of-week label {
+  min-width: unset; /* Override previous min-width */
+  margin-right: 0;
+}
+
+.days-of-week input[type="checkbox"] {
+  margin-right: 5px;
+}
