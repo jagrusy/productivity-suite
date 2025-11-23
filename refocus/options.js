@@ -185,7 +185,7 @@ document.addEventListener('DOMContentLoaded', () => {
       suggestionMessage.innerHTML = `
         <p class="suggestion-text">
           Your productive sites list is empty! Add some sites you'd like to be redirected to. 
-          The default redirect site is currently: <a href="${defaultRedirectSite}" target="_blank">${defaultRedirectSite}</a>.
+          You can also set or change the default redirect site using the input field above.
           Here are some ideas to get you started:
         </p>
         <ul>
