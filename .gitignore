@@ -6,3 +6,5 @@ package.sh
 CLAUDE.md
 refocus/tests/
 refocus/*.test.js
+GoogleTasksPomodoro/
+google-tasks-pomodoro/
